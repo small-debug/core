@@ -37,7 +37,7 @@ void checkPostManagementRightsTransferInput(const PostManagementRightsTransfer_i
     EXPECT_EQ(observed.possessor, expected.possessor);
 }
 
-class StateCheckerTestExampleA : public TESTEXA
+class StateCheckerTestExampleA : public TESTEXA, public TESTEXA::StateData
 {
 public:
     void checkPostReleaseCounter(uint32 expectedCount)
@@ -81,7 +81,7 @@ public:
     }
 };
 
-class StateCheckerTestExampleB : public TESTEXB
+class StateCheckerTestExampleB : public TESTEXB, public TESTEXB::StateData
 {
 public:
     void checkPostReleaseCounter(uint32 expectedCount)
@@ -537,6 +537,15 @@ public:
         typename StateStruct::SetVotesInOtherContractAsShareholder_output output;
         invokeUserProcedure(StateStruct::__contract_index, 41, input, output, originator, 0);
         return output.success;
+    }
+
+    void beginEpoch(bool expectSuccess = true)
+    {
+        callSystemProcedure(TESTEXD_CONTRACT_INDEX, BEGIN_EPOCH, expectSuccess);
+        callSystemProcedure(TESTEXC_CONTRACT_INDEX, BEGIN_EPOCH, expectSuccess);
+        callSystemProcedure(TESTEXB_CONTRACT_INDEX, BEGIN_EPOCH, expectSuccess);
+        callSystemProcedure(TESTEXA_CONTRACT_INDEX, BEGIN_EPOCH, expectSuccess);
+        callSystemProcedure(QX_CONTRACT_INDEX, BEGIN_EPOCH, expectSuccess);
     }
 
     void endEpoch(bool expectSuccess = true)
@@ -1114,6 +1123,9 @@ TEST(ContractTestEx, ResolveDeadlockCallbackProcedureAndConcurrentFunction)
 TEST(ContractTestEx, QueryBasicQpiFunctions)
 {
     ContractTestingTestEx test;
+
+    // some simple QPI functions tests that are independent of the tick
+    test.beginEpoch();
 
     id arbitratorPubKey;
     getPublicKeyFromIdentity((const unsigned char*)ARBITRATOR, arbitratorPubKey.m256i_u8);
